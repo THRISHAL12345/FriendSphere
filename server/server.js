@@ -31,7 +31,11 @@ birthdayCheck();
 
 // --- MIDDLEWARE ---
 // 1. Enable CORS for all routes
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://friendhub.netlify.app",
+  })
+);
 
 // 2. Enable the built-in JSON body parser
 app.use(express.json());
