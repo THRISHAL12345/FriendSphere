@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create a new axios instance
 const api = axios.create({
-  baseURL: "http://localhost:5001/api",
+  baseURL: "https://friendsphere-backend.onrender.com/api",
 });
 
 // This is the magic! We're adding an "interceptor".

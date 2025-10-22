@@ -16,7 +16,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (userInfo) {
       // Connect to the server with authentication token
-      const newSocket = io("http://localhost:5001", {
+      const newSocket = io("https://friendsphere-backend.onrender.com", {
         auth: {
           token: userInfo.token,
         },
