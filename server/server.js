@@ -33,7 +33,9 @@ birthdayCheck();
 // 1. Enable CORS for all routes
 app.use(
   cors({
-    origin: "https://friendhub.netlify.app",
+    origin: ["https://friendhub.netlify.app"], // frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
 
