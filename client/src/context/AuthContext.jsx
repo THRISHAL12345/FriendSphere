@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
-import axios from "axios";
+import api from "../api/api"; // Import the centralized api instance
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
@@ -13,8 +13,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-  const API_URL = "http://localhost:5001/api";
 
   useEffect(() => {
     const storedUserInfo = localStorage.getItem("userInfo");
@@ -33,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.post(`${API_URL}/users/login`, {
+      const { data } = await api.post("/users/login", {
         email,
         password,
       });
@@ -50,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.post(`${API_URL}/users/register`, userData);
+      const { data } = await api.post("/users/register", userData);
       updateUser(data); // Use helper
       navigate("/");
     } catch (err) {
