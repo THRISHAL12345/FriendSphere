@@ -2,6 +2,8 @@ const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 const cloudinary = require("../config/cloudinary");
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 
 // --- Helper function to format the user response ---
 const formatUserResponse = (user) => ({
@@ -87,8 +89,112 @@ const updateUserProfilePicture = asyncHandler(async (req, res) => {
   }
 });
 
+// --- ADD THIS FUNCTION ---
+// @desc    Request password reset
+// @route   POST /api/users/forgot-password
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+  // 1. Get user based on POSTed email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    // Don't reveal if user exists or not for security
+    res.status(404); // Or maybe 200 OK to prevent email enumeration
+    throw new Error(
+      "If an account with that email exists, a reset link has been sent."
+    );
+  }
+
+  // 2. Generate the random reset token (plain text version)
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // 3. Hash the token and set it in the user document
+  user.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // 4. Set token expiry (e.g., 10 minutes from now)
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes in ms
+
+  await user.save({ validateBeforeSave: false }); // Save, skipping validations if needed
+
+  // 5. Create the reset URL (frontend URL + plain token)
+  //    Make sure FRONTEND_URL is set in your .env or replace directly
+  const resetURL = `${
+    process.env.FRONTEND_URL || "https://friendhub.netlify.app"
+  }/reset-password/${resetToken}`;
+
+  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Your FriendSphere Password Reset Token (valid for 10 min)",
+      message,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to email!",
+    });
+  } catch (err) {
+    // If email fails, clear the token from the DB to allow retry
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    console.error("EMAIL ERROR:", err);
+    res.status(500);
+    throw new Error("There was an error sending the email. Try again later.");
+  }
+});
+
+// --- ADD THIS FUNCTION ---
+// @desc    Reset password using token
+// @route   PATCH /api/users/reset-password/:token
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+  // 1. Get user based on the hashed token and ensure it hasn't expired
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token) // Hash the token from the URL
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() }, // Check if expiry is in the future
+  });
+
+  // 2. If token is invalid or expired
+  if (!user) {
+    res.status(400);
+    throw new Error("Token is invalid or has expired");
+  }
+
+  // 3. If token is valid, set the new password
+  if (!req.body.password || req.body.password !== req.body.confirmPassword) {
+    res.status(400);
+    throw new Error("Passwords do not match or are missing");
+  }
+  user.password = req.body.password; // Mongoose 'pre-save' hook will hash it
+  user.passwordResetToken = undefined; // Invalidate the token
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  // 4. Log the user in (optional, or just send success)
+  // You could generate a new JWT here and send it back
+  res.status(200).json({
+    status: "success",
+    message: "Password reset successful. Please log in.",
+    // token: generateToken(user._id), // Optionally log them in directly
+  });
+});
+
+// --- Make sure to export the new functions ---
 module.exports = {
   registerUser,
   loginUser,
   updateUserProfilePicture,
+  forgotPassword, // <-- Add this
+  resetPassword, // <-- Add this
 };

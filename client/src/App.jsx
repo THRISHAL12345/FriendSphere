@@ -4,11 +4,13 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import RoomDetailPage from "./pages/RoomDetailPage";
-import ProfilePage from "./pages/ProfilePage"; // <-- Import
+import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
 import NotificationToast from "./components/NotificationToast";
 import SplashScreen from "./components/SplashScreen";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,8 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         {/* Protected Routes */}
         <Route
           path="/"

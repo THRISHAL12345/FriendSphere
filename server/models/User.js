@@ -38,6 +38,8 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "", // Or a URL to a default avatar
     },
+    passwordResetToken: String,
+    passwordResetExpires: Date,
   },
   {
     timestamps: true,

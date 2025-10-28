@@ -69,6 +69,15 @@ const LoginPage = () => {
                 />
               </div>
 
+              <div className="text-sm text-right">
+                <Link
+                  to="/forgot-password" // Link to the new page/route
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
               {error && (
                 <p className="text-sm text-center text-red-500">{error}</p>
               )}
