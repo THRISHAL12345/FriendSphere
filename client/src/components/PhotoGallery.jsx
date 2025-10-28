@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import api from "../api/api";
-import UploadPhotoForm from "./UploadPhotoForm"; // Assuming this component is correct
+import { useAuth } from "../context/AuthContext"; // Import useAuth to check user ID
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiArrowLeft, FiArrowRight, FiUser } from "react-icons/fi"; // Add FiUser for default avatar
+import {
+  FiUploadCloud,
+  FiImage,
+  FiX,
+  FiArrowLeft,
+  FiArrowRight,
+  FiUser,
+  FiTrash2,
+} from "react-icons/fi";
+import UploadPhotoForm from "./UploadPhotoForm"; // Ensure this component exists and works
 
-// --- Small Avatar Component (similar to other components) ---
+// --- Small Avatar Component ---
 const PhotoUploaderAvatar = ({ src, name }) => (
   <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0 mr-2 border border-gray-300">
     {src ? (
@@ -15,56 +24,83 @@ const PhotoUploaderAvatar = ({ src, name }) => (
   </div>
 );
 
-const PhotoGallery = ({ roomId, members }) => {
+// --- Main Photo Gallery Component ---
+const PhotoGallery = ({ roomId, members, roomOwnerId }) => {
+  // Pass roomOwnerId as a prop if needed for delete logic
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null); // For fullscreen viewer
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
+  const { userInfo } = useAuth(); // Get current logged-in user info
 
+  // Function to fetch photos for the room
   const fetchPhotos = async () => {
     try {
-      // Reset state for refetch
       setLoading(true);
       setError(null);
       const { data } = await api.get(`/photos/room/${roomId}`);
       setPhotos(data);
     } catch (err) {
+      console.error("Error fetching photos:", err);
       setError(err.response?.data?.message || "Failed to fetch photos");
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch photos when the component mounts or roomId changes
   useEffect(() => {
     fetchPhotos();
-  }, [roomId]); // Fetch on component load or if roomId changes
+  }, [roomId]);
 
+  // Handle adding a new photo (update state or refetch)
   const handlePhotoUploaded = (newPhoto) => {
-    // Add new photo optimistically or refetch
-    setPhotos((prevPhotos) => [newPhoto, ...prevPhotos]);
-    // Or uncomment below to refetch for guaranteed consistency
-    // fetchPhotos();
+    setPhotos((prevPhotos) => [newPhoto, ...prevPhotos]); // Add to start of list
+    // Optionally refetch for consistency: fetchPhotos();
   };
 
+  // Handle deleting a photo
+  const handleDeletePhoto = async (photoId) => {
+    if (!window.confirm("Are you sure you want to delete this photo?")) {
+      return;
+    }
+    try {
+      setError(null); // Clear previous errors
+      await api.delete(`/photos/${photoId}`);
+      // Remove the photo from the local state immediately for better UX
+      setPhotos((prevPhotos) => prevPhotos.filter((p) => p._id !== photoId));
+      // Close viewer if the deleted photo was selected
+      if (
+        selectedPhotoIndex !== null &&
+        photos[selectedPhotoIndex]?._id === photoId
+      ) {
+        closeImageViewer();
+      }
+      // Optionally call fetchPhotos() again if needed, but filtering is faster
+    } catch (err) {
+      console.error("Delete photo error:", err);
+      setError(err.response?.data?.message || "Failed to delete photo");
+    }
+  };
+
+  // --- Image Viewer Functions ---
   const openImageViewer = (index) => {
-    setSelectedPhotoIndex(index);
+    if (index >= 0 && index < photos.length) {
+      setSelectedPhotoIndex(index);
+    }
   };
-
-  const closeImageViewer = () => {
-    setSelectedPhotoIndex(null);
-  };
-
+  const closeImageViewer = () => setSelectedPhotoIndex(null);
   const goToNextPhoto = () => {
     if (selectedPhotoIndex === null) return;
     setSelectedPhotoIndex((prevIndex) => (prevIndex + 1) % photos.length);
   };
-
   const goToPrevPhoto = () => {
     if (selectedPhotoIndex === null) return;
     setSelectedPhotoIndex(
       (prevIndex) => (prevIndex - 1 + photos.length) % photos.length
     );
   };
+  // ----------------------------
 
   // --- Loading and Error States ---
   if (loading)
@@ -73,14 +109,14 @@ const PhotoGallery = ({ roomId, members }) => {
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
-  if (error)
+  // Display fetch errors prominently
+  if (error && photos.length === 0)
     return <p className="text-red-600 bg-red-100 p-3 rounded-lg">{error}</p>;
 
-  // --- Organize photos into sections ---
-  // Ensure 'members' is an array before using 'forEach'
+  // --- Organize Photos into Sections ---
   const memberMap = Array.isArray(members)
     ? members.reduce((acc, member) => {
-        acc[member._id] = member; // Map member ID to member object
+        acc[member._id] = member;
         return acc;
       }, {})
     : {};
@@ -96,35 +132,50 @@ const PhotoGallery = ({ roomId, members }) => {
   };
 
   photos.forEach((photo) => {
-    // Check if the section exists before pushing
-    if (sections[photo.section]) {
-      sections[photo.section].photos.push(photo);
-    } else if (photo.section === "group" && sections.group) {
-      // Fallback for 'group' explicitly
-      sections.group.photos.push(photo);
+    // Handle potential missing uploader data gracefully
+    const sectionKey = photo.section || "group"; // Default to group if section is missing? Decide behavior.
+
+    if (sections[sectionKey]) {
+      sections[sectionKey].photos.push(photo);
+    } else {
+      // If a photo has a section ID that doesn't match a current member or 'group',
+      // maybe put it in a default section or ignore? For now, we put in 'group'.
+      console.warn(
+        `Photo ${photo._id} has unknown section ${sectionKey}, adding to group.`
+      );
+      if (sections.group) sections.group.photos.push(photo);
     }
-    // You might want a fallback for photos whose section doesn't match any member or 'group'
   });
-  // Filter out sections that might have been created but have no photos
+
   const sectionsWithPhotos = Object.entries(sections).filter(
     ([key, section]) => section.photos.length > 0
   );
-  // --- End Organization ---
+  // ---------------------------------
 
   return (
     <div className="space-y-8">
+      {/* Upload Form Component */}
       <UploadPhotoForm
         roomId={roomId}
         members={members}
         onPhotoUploaded={handlePhotoUploaded}
       />
 
+      {/* Display delete errors here */}
+      {error && (
+        <p className="text-sm text-center text-red-500 bg-red-100 p-2 rounded">
+          {error}
+        </p>
+      )}
+
+      {/* Message if no photos exist */}
       {photos.length === 0 && !loading && (
         <p className="text-center text-gray-500 py-8">
           No photos uploaded yet. Be the first to share!
         </p>
       )}
 
+      {/* Render each section with photos */}
       {sectionsWithPhotos.map(([key, section]) => (
         <div key={key}>
           <h3 className="text-2xl font-semibold text-gray-900 mb-4">
@@ -133,11 +184,19 @@ const PhotoGallery = ({ roomId, members }) => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <AnimatePresence>
               {section.photos.map((photo) => {
-                // Find the index in the original, flat 'photos' array for the viewer
                 const originalIndex = photos.findIndex(
                   (p) => p._id === photo._id
                 );
-                const uploader = memberMap[photo.uploader]; // Get uploader info
+                const uploader = photo.uploader
+                  ? memberMap[photo.uploader._id] || photo.uploader
+                  : null; // Handle populated/unpopulated uploader
+
+                // Determine if the current user can delete this photo
+                const canDelete =
+                  userInfo &&
+                  photo.uploader &&
+                  photo.uploader._id === userInfo._id; // User uploaded it
+                  // || (roomOwnerId && roomOwnerId === userInfo._id) // User is room owner (requires roomOwnerId prop)
 
                 return (
                   <motion.div
@@ -155,17 +214,31 @@ const PhotoGallery = ({ roomId, members }) => {
                       src={photo.imageUrl}
                       alt={photo.description || "Room photo"}
                       className="object-cover w-full h-full"
-                      loading="lazy" // Improve performance
+                      loading="lazy"
                     />
-                    {/* Optional: Show uploader avatar/name */}
+                    {/* Show uploader info */}
                     {uploader && (
-                      <div className="absolute bottom-1 left-1 flex items-center p-1 bg-black/40 rounded text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-1 left-1 flex items-center p-1 bg-black/50 rounded text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">
                         <PhotoUploaderAvatar
                           src={uploader.profilePictureUrl}
                           name={uploader.name}
                         />
-                        <span className="ml-1">{uploader.name}</span>
+                        <span className="ml-1 truncate">{uploader.name}</span>
                       </div>
+                    )}
+                    {/* Show Delete Button */}
+                    {canDelete && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePhoto(photo._id);
+                        }}
+                        className="absolute top-1 right-1 p-1.5 bg-red-600 bg-opacity-60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10 hover:bg-opacity-90 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        title="Delete photo"
+                        aria-label="Delete photo"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
                     )}
                   </motion.div>
                 );
@@ -175,11 +248,11 @@ const PhotoGallery = ({ roomId, members }) => {
         </div>
       ))}
 
-      {/* Fullscreen Image Viewer Modal (Using AnimatePresence for exit animation) */}
+      {/* Fullscreen Image Viewer Modal */}
       <AnimatePresence>
         {selectedPhotoIndex !== null && photos[selectedPhotoIndex] && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -187,9 +260,9 @@ const PhotoGallery = ({ roomId, members }) => {
           >
             {/* Image Container */}
             <motion.div
-              key={photos[selectedPhotoIndex]._id} // Key changes trigger animation
+              key={photos[selectedPhotoIndex]._id}
               className="relative"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image area
+              onClick={(e) => e.stopPropagation()}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
@@ -205,13 +278,13 @@ const PhotoGallery = ({ roomId, members }) => {
             {/* Close Button */}
             <button
               onClick={closeImageViewer}
-              className="absolute top-4 right-4 p-3 bg-white bg-opacity-20 text-white rounded-full hover:bg-opacity-40 transition-all z-10"
+              className="absolute top-4 right-4 p-3 bg-white bg-opacity-20 text-white rounded-full hover:bg-opacity-40 transition-all z-[110]"
               aria-label="Close image viewer"
             >
               <FiX className="w-6 h-6" />
             </button>
 
-            {/* Navigation Buttons (Only if more than one photo) */}
+            {/* Navigation Buttons */}
             {photos.length > 1 && (
               <>
                 <button
@@ -219,7 +292,7 @@ const PhotoGallery = ({ roomId, members }) => {
                     e.stopPropagation();
                     goToPrevPhoto();
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white bg-opacity-20 text-white rounded-full hover:bg-opacity-40 transition-all z-10"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-3 bg-white bg-opacity-20 text-white rounded-full hover:bg-opacity-40 transition-all z-[110]"
                   aria-label="Previous image"
                 >
                   <FiArrowLeft className="w-6 h-6" />
@@ -229,7 +302,7 @@ const PhotoGallery = ({ roomId, members }) => {
                     e.stopPropagation();
                     goToNextPhoto();
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white bg-opacity-20 text-white rounded-full hover:bg-opacity-40 transition-all z-10"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-3 bg-white bg-opacity-20 text-white rounded-full hover:bg-opacity-40 transition-all z-[110]"
                   aria-label="Next image"
                 >
                   <FiArrowRight className="w-6 h-6" />

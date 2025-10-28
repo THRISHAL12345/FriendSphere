@@ -237,6 +237,32 @@ const initializeSocket = (server) => {
       }
     });
 
+    // Add this inside io.on('connection', ...)
+    socket.on("deletePoll", async (data) => {
+      try {
+        const { pollId } = data;
+        const poll = await Poll.findById(pollId);
+        if (!poll) return; // Poll already deleted or doesn't exist
+
+        // Security Check (redundant if API is used, but good practice)
+        const room = await Room.findById(poll.room);
+        if (!room) return;
+        if (
+          poll.createdBy.toString() !== socket.user._id.toString() &&
+          room.owner.toString() !== socket.user._id.toString()
+        ) {
+          // Optionally emit an error back to sender
+          return;
+        }
+
+        await poll.deleteOne();
+        // Broadcast the ID of the deleted poll
+        io.to(poll.room.toString()).emit("pollDeleted", { pollId });
+      } catch (err) {
+        console.error("Error deleting poll via socket:", err);
+      }
+    });
+
     // Handle disconnection
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
