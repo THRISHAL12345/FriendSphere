@@ -1,33 +1,30 @@
-const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
+
+// Set the SendGrid API key from environment variables
+sgMail.setApiKey(process.env.EMAIL_PASSWORD);
 
 const sendEmail = async (options) => {
-  // 1. Create a transporter
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT, // Should be 465
-    secure: true, // true for 465, false for 587
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-
-  // 2. Define email options
-  const mailOptions = {
-    from: `FriendSphere <${process.env.EMAIL_FROM}>`,
+  const msg = {
     to: options.email,
+    from: process.env.EMAIL_FROM, // This should be a verified sender in your SendGrid account
     subject: options.subject,
     text: options.message,
-    // html: // You can also send HTML emails
+    // You can also add an html property for HTML emails
+    // html: '<strong>and easy to do anywhere, even with Node.js</strong>',
   };
 
-  // 3. Actually send the email
   try {
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully");
+    await sgMail.send(msg);
+    console.log("Email sent successfully via SendGrid");
   } catch (error) {
-    console.error("Error sending email:", error);
-    // Rethrow or handle specific errors differently if needed
+    console.error("Error sending email via SendGrid:", error);
+
+    // If the error object has more details, log them
+    if (error.response) {
+      console.error(error.response.body);
+    }
+
+    // Throw a generic error to the user
     throw new Error("There was an error sending the email, try again later.");
   }
 };
