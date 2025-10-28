@@ -14,22 +14,6 @@ FriendSphere is a feature-rich, real-time social platform designed to bring frie
 - **Food & Travel Sharing:** Specialized features to coordinate food sharing and travel plans.
 - **Secure Authentication:** Robust user authentication system to protect your data.
 
-## 📸 Screenshots
-
-_(Space reserved for Login/Register Page Screenshot)_
-
----
-
-_(Space reserved for Dashboard/Main Layout Screenshot)_
-
----
-
-_(Space reserved for Chat Window Screenshot)_
-
----
-
-_(Space reserved for Expense Tracker Screenshot)_
-
 ## 🛠️ Tech Stack
 
 - **Frontend:** React, Vite, Tailwind CSS, Axios
