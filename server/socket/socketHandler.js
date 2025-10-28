@@ -165,9 +165,10 @@ const initializeSocket = (server) => {
         todo.completedBy = todo.isCompleted ? socket.user._id : undefined;
 
         const savedTodo = await todo.save();
-        const populatedTodo = await savedTodo
-          .populate("createdBy", "name profilePictureUrl")
-          .populate("completedBy", "name"); // Populate completer
+        const populatedTodo = await savedTodo.populate([
+          { path: "createdBy", select: "name profilePictureUrl" },
+          { path: "completedBy", select: "name" }, // Populate completer details
+        ]);
         io.to(todo.room.toString()).emit("todoUpdated", populatedTodo); // Broadcast updated todo
       } catch (err) {
         console.error("Error toggling todo:", err);
