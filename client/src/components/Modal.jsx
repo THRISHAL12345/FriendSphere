@@ -30,15 +30,17 @@ const Modal = ({ isOpen, onClose, title, children }) => {
           exit="hidden"
         >
           <motion.div
-            className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+            className="bg-white rounded-lg shadow-2xl w-11/12 sm:w-full max-w-md mx-4 overflow-hidden"
             variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
             {/* Header */}
-            <div className="flex justify-between items-center p-5 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-gray-200">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {title}
+              </h3>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-800 transition-colors"
@@ -48,7 +50,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
               </button>
             </div>
             {/* Body */}
-            <div className="p-6">{children}</div>
+            <div className="p-4 sm:p-6">{children}</div>
           </motion.div>
         </motion.div>
       )}

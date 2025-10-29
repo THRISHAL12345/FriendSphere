@@ -124,13 +124,19 @@ const forgotPassword = asyncHandler(async (req, res) => {
     process.env.FRONTEND_URL || "https://friendhub.netlify.app"
   }/reset-password/${resetToken}`;
 
-  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+  const message = `Forgot your password? Click the link below to reset it. This link is valid for 10 minutes.`;
+  const html = `
+    <p>${message}</p>
+    <a href="${resetURL}" style="background-color: #4CAF50; color: white; padding: 14px 25px; text-align: center; text-decoration: none; display: inline-block;">Reset Password</a>
+    <p>If you didn't request a password reset, please ignore this email.</p>
+  `;
 
   try {
     await sendEmail({
       email: user.email,
-      subject: "Your FriendSphere Password Reset Token (valid for 10 min)",
-      message,
+      subject: "Your FriendSphere Password Reset Link (valid for 10 min)",
+      message, // Fallback for non-HTML clients
+      html, // HTML version of the email
     });
 
     res.status(200).json({

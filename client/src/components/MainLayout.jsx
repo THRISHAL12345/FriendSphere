@@ -31,12 +31,15 @@ const MainLayout = ({ children }) => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Link to="/" className="text-2xl font-bold text-primary">
+                <Link
+                  to="/"
+                  className="text-xl sm:text-2xl font-bold text-primary"
+                >
                   FriendSphere
                 </Link>
               </div>
             </div>
-            <div className="flex items-center space-x-5">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Avatar src={userInfo?.profilePictureUrl} name={userInfo?.name} />
               <NotificationBell />
               <button
@@ -53,7 +56,9 @@ const MainLayout = ({ children }) => {
 
       {/* Page Content */}
       <main>
-        <div className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">{children}</div>
+        <div className="max-w-7xl mx-auto py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8">
+          {children}
+        </div>
       </main>
     </div>
   );

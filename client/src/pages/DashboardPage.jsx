@@ -43,27 +43,27 @@ const DashboardPage = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-8 text-center sm:text-left"
         >
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
             Welcome back, {userInfo?.name}!
           </h1>
-          <p className="mt-2 text-lg text-gray-600">
+          <p className="mt-2 text-md sm:text-lg text-gray-600">
             Here are your active friend spheres.
           </p>
         </motion.div>
 
-        <div className="flex justify-end items-center mb-6 space-x-3">
+        <div className="flex flex-col sm:flex-row sm:justify-end items-center mb-6 gap-3">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg shadow-md hover:bg-primary-dark transition-all"
+            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg shadow-md hover:bg-primary-dark transition-all"
           >
             <FiPlus className="mr-2" />
             Create Room
           </button>
           <button
             onClick={() => setIsJoinModalOpen(true)}
-            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-all"
+            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-all"
           >
             <FiArrowRight className="mr-2" />
             Join Room
@@ -88,9 +88,9 @@ const DashboardPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                   whileHover={{ scale: 1.03 }} // <-- Cool hover effect
-                  className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+                  className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
                 >
-                  <h3 className="text-2xl font-semibold mb-2 text-gray-800">
+                  <h3 className="text-xl sm:text-2xl font-semibold mb-2 text-gray-800">
                     {room.name}
                   </h3>
                   <div className="flex items-center text-gray-500 mb-4">

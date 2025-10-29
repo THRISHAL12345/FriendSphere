@@ -178,21 +178,23 @@ const RoomDetailPage = () => {
       className="space-y-6"
     >
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-6 bg-gradient-to-r from-primary to-purple-700 text-white rounded-lg shadow-lg">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 bg-gradient-to-r from-primary to-purple-700 text-white rounded-lg shadow-lg">
         <div>
-          <h1 className="text-4xl font-bold">{room.name}</h1>
-          <p className="mt-1 opacity-80">Manage everything for this sphere.</p>
+          <h1 className="text-3xl sm:text-4xl font-bold">{room.name}</h1>
+          <p className="mt-1 text-sm sm:text-base opacity-80">
+            Manage everything for this sphere.
+          </p>
         </div>
-        <div className="text-right mt-4 sm:mt-0">
+        <div className="text-left sm:text-right mt-4 sm:mt-0 w-full sm:w-auto">
           <span className="text-sm opacity-70 block">Room ID</span>
-          <code className="block bg-black/20 p-2 rounded text-sm font-mono mt-1">
+          <code className="block bg-black/20 p-2 rounded text-sm font-mono mt-1 w-full truncate">
             {room._id}
           </code>
         </div>
       </div>
 
       {/* Tabbed Interface Section */}
-      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-200">
+      <div className="bg-white rounded-lg shadow-md border border-gray-200">
         <Tabs
           tabs={tabs}
           activeTab={activeTab}

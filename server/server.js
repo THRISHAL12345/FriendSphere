@@ -29,11 +29,9 @@ const io = initializeSocket(server);
 
 birthdayCheck();
 
-// --- MIDDLEWARE ---
-// 1. Enable CORS for all routes
 app.use(
   cors({
-    origin: ["https://friendhub.netlify.app"], // frontend URL
+    origin: ["https://friendhub.netlify.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })

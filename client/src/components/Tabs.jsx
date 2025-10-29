@@ -9,10 +9,13 @@ const contentVariants = {
 
 const Tabs = ({ tabs, activeTab, onTabClick }) => {
   return (
-    <div>
-      {/* Tab Headers (Unchanged) */}
+    <div className="w-full">
+      {/* Tab Headers */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+        <nav
+          className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto"
+          aria-label="Tabs"
+        >
           {tabs.map((tab) => (
             <button
               key={tab.name}
@@ -21,7 +24,7 @@ const Tabs = ({ tabs, activeTab, onTabClick }) => {
                 activeTab === tab.name
                   ? "text-primary"
                   : "text-gray-500 hover:text-gray-700"
-              } relative whitespace-nowrap py-4 px-1 font-medium text-sm transition-colors`}
+              } relative whitespace-nowrap py-4 px-2 sm:px-1 font-medium text-sm transition-colors focus:outline-none`}
             >
               {tab.name}
               {activeTab === tab.name && (
@@ -38,7 +41,7 @@ const Tabs = ({ tabs, activeTab, onTabClick }) => {
       </div>
 
       {/* --- Updated Animated Tab Content --- */}
-      <div className="py-6">
+      <div className="py-4 sm:py-6">
         <AnimatePresence mode="wait">
           {tabs.map((tab) => {
             if (activeTab === tab.name) {

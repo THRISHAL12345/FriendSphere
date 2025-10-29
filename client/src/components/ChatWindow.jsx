@@ -76,9 +76,9 @@ const ChatWindow = ({ roomId }) => {
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="flex flex-col h-[600px] bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="flex flex-col h-[70vh] sm:h-[600px] bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Message Display Area */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
+      <div className="flex-1 p-2 sm:p-4 overflow-y-auto space-y-4">
         <AnimatePresence>
           {messages.map((msg) => {
             const isMe = msg.sender._id === userInfo._id;
@@ -92,7 +92,7 @@ const ChatWindow = ({ roomId }) => {
                 className={`flex ${isMe ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`flex items-start max-w-xs ${
+                  className={`flex items-start max-w-sm sm:max-w-md ${
                     isMe
                       ? "flex-row-reverse space-x-reverse"
                       : "flex-row space-x-2"
@@ -100,7 +100,7 @@ const ChatWindow = ({ roomId }) => {
                 >
                   <ChatAvatar src={msg.sender.profilePictureUrl} />
                   <div
-                    className={`p-3 rounded-lg ${
+                    className={`p-2 sm:p-3 rounded-lg ${
                       isMe
                         ? "bg-primary text-white rounded-br-none"
                         : "bg-gray-200 text-gray-800 rounded-bl-none"
@@ -133,18 +133,21 @@ const ChatWindow = ({ roomId }) => {
       </div>
 
       {/* Message Input Area */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
-        <form onSubmit={handleSendMessage} className="flex space-x-3">
+      <div className="p-2 sm:p-4 border-t border-gray-200 bg-gray-50">
+        <form
+          onSubmit={handleSendMessage}
+          className="flex space-x-2 sm:space-x-3"
+        >
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <button
             type="submit"
-            className="flex items-center justify-center px-5 py-3 text-white bg-primary rounded-lg shadow-md hover:bg-primary-dark transition-all"
+            className="flex items-center justify-center px-4 sm:px-5 py-2 sm:py-3 text-white bg-primary rounded-lg shadow-md hover:bg-primary-dark transition-all"
           >
             <FiSend />
           </button>
